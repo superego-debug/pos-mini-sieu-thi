@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS Siêu Thị Mini — Quản lý bán hàng</title>
+<meta name="description" content="Ứng dụng quản lý siêu thị mini và in hóa đơn bán lẻ, chạy trực tiếp trên trình duyệt.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-icon">🛒</span>
+    <div>
+      <h1>POS Siêu Thị Mini</h1>
+      <p id="brand-sub">Quản lý bán hàng &amp; hóa đơn</p>
+    </div>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="ban-hang">Bán hàng</button>
+    <button class="tab" data-tab="san-pham">Sản phẩm</button>
+    <button class="tab" data-tab="hoa-don">Hóa đơn</button>
+    <button class="tab" data-tab="thong-ke">Thống kê</button>
+  </nav>
+
+  <div class="clock">
+    <strong id="clock-time">--:--</strong>
+    <span id="clock-date">—</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============================ TAB BÁN HÀNG ============================ -->
+  <section class="tab-panel active" id="panel-ban-hang">
+    <div class="pos-layout">
+
+      <!-- cột trái: chọn hàng -->
+      <div class="panel products-panel">
+        <div class="panel-head">
+          <input type="search" id="search-product" placeholder="Tìm theo tên hoặc mã hàng…" aria-label="Tìm sản phẩm">
+        </div>
+        <div class="chips" id="category-chips"></div>
+        <div class="product-grid" id="product-grid"></div>
+        <p class="empty" id="product-empty" hidden>Không tìm thấy sản phẩm nào.</p>
+      </div>
+
+      <!-- cột phải: giỏ hàng -->
+      <aside class="panel cart-panel">
+        <div class="panel-head">
+          <h2>Hóa đơn hiện tại</h2>
+          <button class="link danger" id="btn-clear-cart">Xóa hết</button>
+        </div>
+
+        <div class="cart-list" id="cart-list"></div>
+        <p class="empty" id="cart-empty">Chưa có món nào. Bấm vào sản phẩm bên trái để thêm.</p>
+
+        <div class="cart-sum">
+          <div class="row"><span>Tạm tính</span><strong id="sum-subtotal">0 ₫</strong></div>
+          <div class="row">
+            <label for="input-discount">Giảm giá</label>
+            <input type="number" id="input-discount" min="0" step="1000" value="0" inputmode="numeric">
+          </div>
+          <div class="row total"><span>Khách phải trả</span><strong id="sum-total">0 ₫</strong></div>
+        </div>
+
+        <div class="cart-actions">
+          <button class="btn primary block" id="btn-checkout" disabled>Thanh toán (F2)</button>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============================ TAB SẢN PHẨM ============================ -->
+  <section class="tab-panel" id="panel-san-pham">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Danh sách sản phẩm</h2>
+        <div class="head-actions">
+          <input type="search" id="search-admin" placeholder="Tìm sản phẩm…" aria-label="Tìm sản phẩm trong kho">
+          <button class="btn primary" id="btn-add-product">+ Thêm sản phẩm</button>
+        </div>
+      </div>
+
+      <table class="table" id="product-table">
+        <thead>
+          <tr>
+            <th>Mã</th><th>Tên hàng</th><th>Nhóm</th>
+            <th class="num">Giá nhập</th><th class="num">Giá bán</th>
+            <th class="num">Tồn</th><th class="right">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================ TAB HÓA ĐƠN ============================ -->
+  <section class="tab-panel" id="panel-hoa-don">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Hóa đơn đã bán</h2>
+        <div class="head-actions">
+          <input type="date" id="filter-date" aria-label="Lọc theo ngày">
+          <button class="btn ghost" id="btn-clear-filter">Tất cả</button>
+        </div>
+      </div>
+
+      <table class="table" id="invoice-table">
+        <thead>
+          <tr>
+            <th>Mã hóa đơn</th><th>Thời gian</th><th class="num">Số món</th>
+            <th class="num">Tổng tiền</th><th>Thanh toán</th><th class="right">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p class="empty" id="invoice-empty" hidden>Chưa có hóa đơn nào.</p>
+    </div>
+  </section>
+
+  <!-- ============================ TAB THỐNG KÊ ============================ -->
+  <section class="tab-panel" id="panel-thong-ke">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-label">Doanh thu hôm nay</span>
+        <strong class="stat-value" id="stat-today">0 ₫</strong>
+        <span class="stat-note" id="stat-today-count">0 hóa đơn</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Doanh thu tháng này</span>
+        <strong class="stat-value" id="stat-month">0 ₫</strong>
+        <span class="stat-note" id="stat-month-count">0 hóa đơn</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Sản phẩm sắp hết (≤ 5)</span>
+        <strong class="stat-value" id="stat-lowstock">0</strong>
+        <span class="stat-note">cần nhập thêm</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Giá trị tồn kho (theo giá nhập)</span>
+        <strong class="stat-value" id="stat-stock-value">0 ₫</strong>
+        <span class="stat-note" id="stat-product-count">0 mặt hàng</span>
+      </div>
+    </div>
+
+    <div class="panel chart-panel">
+      <div class="panel-head"><h2>Doanh thu 7 ngày gần nhất</h2></div>
+      <div class="chart" id="chart"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Bán chạy trong 30 ngày</h2></div>
+      <table class="table" id="top-table">
+        <thead><tr><th>#</th><th>Sản phẩm</th><th class="num">Đã bán</th><th class="num">Doanh thu</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <p class="empty" id="top-empty" hidden>Chưa có dữ liệu bán hàng.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================ HỘP THOẠI ============================ -->
+<div class="modal" id="modal-checkout" hidden>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Thanh toán</h3>
+      <button class="icon-btn" data-close-modal aria-label="Đóng">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="pay-total">
+        <span>Khách phải trả</span>
+        <strong id="pay-total">0 ₫</strong>
+      </div>
+
+      <label class="field">
+        <span>Hình thức thanh toán</span>
+        <select id="pay-method">
+          <option value="Tiền mặt">Tiền mặt</option>
+          <option value="Chuyển khoản">Chuyển khoản</option>
+          <option value="Thẻ">Thẻ</option>
+        </select>
+      </label>
+
+      <label class="field" id="field-cash">
+        <span>Tiền khách đưa</span>
+        <input type="number" id="pay-cash" min="0" step="1000" inputmode="numeric" placeholder="0">
+      </label>
+
+      <div class="change-line">
+        <span>Tiền thối lại</span>
+        <strong id="pay-change">0 ₫</strong>
+      </div>
+
+      <label class="field">
+        <span>Tên khách (không bắt buộc)</span>
+        <input type="text" id="pay-customer" placeholder="Khách lẻ">
+      </label>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" data-close-modal>Hủy</button>
+      <button class="btn primary" id="btn-confirm-pay">Hoàn tất &amp; in hóa đơn</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-product" hidden>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="product-modal-title">Thêm sản phẩm</h3>
+      <button class="icon-btn" data-close-modal aria-label="Đóng">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="pf-id">
+      <label class="field"><span>Tên hàng</span><input type="text" id="pf-name" placeholder="Ví dụ: Sữa tươi Vinamilk 1L"></label>
+      <div class="field-row">
+        <label class="field"><span>Nhóm hàng</span><input type="text" id="pf-category" list="category-list" placeholder="Sữa, Nước ngọt…"></label>
+        <label class="field"><span>Đơn vị</span><input type="text" id="pf-unit" placeholder="Hộp, chai, gói…"></label>
+      </div>
+      <div class="field-row">
+        <label class="field"><span>Giá nhập</span><input type="number" id="pf-cost" min="0" step="500"></label>
+        <label class="field"><span>Giá bán</span><input type="number" id="pf-price" min="0" step="500"></label>
+      </div>
+      <label class="field"><span>Số lượng tồn</span><input type="number" id="pf-stock" min="0" step="1"></label>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" data-close-modal>Hủy</button>
+      <button class="btn primary" id="btn-save-product">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-receipt" hidden>
+  <div class="modal-box receipt-box">
+    <div class="modal-head no-print">
+      <h3>Hóa đơn</h3>
+      <button class="icon-btn" data-close-modal aria-label="Đóng">✕</button>
+    </div>
+    <div id="receipt-print" class="receipt"></div>
+    <div class="modal-foot no-print">
+      <button class="btn ghost" data-close-modal>Đóng</button>
+      <button class="btn primary" id="btn-print">In hóa đơn</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="category-list"></datalist>
+<div class="toast" id="toast" hidden></div>
+
+<script src="assets/js/store.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
